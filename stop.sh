@@ -5,7 +5,7 @@
 
 set -e
 
-echo "🛑 Stopping Hero Bank System..."
+echo "🛑 Stopping Hero Bank System.."
 
 # Stop frontend
 if [ -f .frontend.pid ]; then
