@@ -1,0 +1,787 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Hero Bank System</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+<style>
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+  :root{
+    --bg:#0a0e1a;--bg2:#111827;--bg3:#1a2235;--bg4:#243044;
+    --accent:#c9a96e;--accent2:#e8c98a;--accent-dim:#8a6d3f;
+    --text:#f0ede8;--text2:#a9b4c8;--text3:#6b7a90;
+    --green:#4ade80;--green-bg:rgba(74,222,128,0.08);
+    --red:#f87171;--red-bg:rgba(248,113,113,0.08);
+    --border:rgba(201,169,110,0.15);--border2:rgba(255,255,255,0.06);
+    --r:14px;--r2:10px;--r3:6px;
+    --shadow:0 4px 24px rgba(0,0,0,0.4);
+  }
+  body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden}
+  .app{display:flex;min-height:100vh}
+
+  /* SIDEBAR */
+  .sidebar{width:240px;background:var(--bg2);border-right:1px solid var(--border2);display:flex;flex-direction:column;padding:0;flex-shrink:0;position:fixed;height:100vh;z-index:100}
+  .logo{padding:28px 24px 24px;border-bottom:1px solid var(--border2)}
+  .logo-text{font-family:'DM Serif Display',serif;font-size:22px;color:var(--accent);letter-spacing:0.02em}
+  .logo-sub{font-size:10px;color:var(--text3);letter-spacing:0.15em;text-transform:uppercase;margin-top:2px}
+  .nav{flex:1;padding:16px 12px}
+  .nav-label{font-size:10px;letter-spacing:0.12em;color:var(--text3);text-transform:uppercase;padding:8px 12px 6px;margin-top:8px}
+  .nav-item{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:var(--r3);cursor:pointer;font-size:14px;font-weight:400;color:var(--text2);transition:all 0.15s;margin-bottom:2px;user-select:none}
+  .nav-item:hover{background:var(--bg3);color:var(--text)}
+  .nav-item.active{background:linear-gradient(135deg,rgba(201,169,110,0.18),rgba(201,169,110,0.06));color:var(--accent);font-weight:500}
+  .nav-item svg{width:16px;height:16px;flex-shrink:0;opacity:0.8}
+  .nav-item.active svg{opacity:1}
+  .sidebar-footer{padding:16px 20px;border-top:1px solid var(--border2)}
+  .user-info{display:flex;align-items:center;gap:10px}
+  .avatar{width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,var(--accent),var(--accent-dim));display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:600;color:#1a1000;flex-shrink:0}
+  .user-name{font-size:13px;font-weight:500;color:var(--text)}
+  .user-id{font-size:11px;color:var(--text3)}
+
+  /* MAIN */
+  .main{flex:1;margin-left:240px;padding:32px 36px;max-width:calc(100% - 240px)}
+
+  /* TOP BAR */
+  .topbar{display:flex;align-items:center;justify-content:space-between;margin-bottom:32px}
+  .page-title{font-family:'DM Serif Display',serif;font-size:26px;color:var(--text)}
+  .page-sub{font-size:13px;color:var(--text3);margin-top:2px}
+  .topbar-right{display:flex;align-items:center;gap:12px}
+  .notif-btn{width:36px;height:36px;border-radius:50%;background:var(--bg3);border:1px solid var(--border2);display:flex;align-items:center;justify-content:center;cursor:pointer;position:relative}
+  .notif-dot{width:7px;height:7px;background:var(--accent);border-radius:50%;position:absolute;top:6px;right:6px;border:2px solid var(--bg3)}
+
+  /* CARDS GRID */
+  .cards-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px;margin-bottom:32px}
+  .stat-card{background:var(--bg2);border:1px solid var(--border2);border-radius:var(--r);padding:20px;position:relative;overflow:hidden;cursor:pointer;transition:border-color 0.2s}
+  .stat-card:hover{border-color:var(--border)}
+  .stat-card.accent-card{background:linear-gradient(135deg,#1f1800,#16120a);border-color:var(--accent-dim)}
+  .stat-label{font-size:11px;letter-spacing:0.1em;color:var(--text3);text-transform:uppercase;margin-bottom:10px}
+  .stat-value{font-family:'DM Serif Display',serif;font-size:28px;color:var(--text);line-height:1.1}
+  .stat-value.gold{color:var(--accent)}
+  .stat-change{font-size:12px;color:var(--green);margin-top:6px;display:flex;align-items:center;gap:4px}
+  .stat-change.neg{color:var(--red)}
+  .card-icon{position:absolute;right:16px;top:16px;width:32px;height:32px;border-radius:8px;background:rgba(255,255,255,0.04);display:flex;align-items:center;justify-content:center;opacity:0.6}
+
+  /* SECTION */
+  .section{margin-bottom:32px}
+  .section-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px}
+  .section-title{font-family:'DM Serif Display',serif;font-size:18px}
+  .link-btn{font-size:12px;color:var(--accent);cursor:pointer;letter-spacing:0.04em;border:none;background:none;padding:0;font-family:inherit}
+
+  /* ACCOUNT CARDS ROW */
+  .accounts-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:16px}
+  .account-card{background:var(--bg2);border:1px solid var(--border2);border-radius:var(--r);padding:20px 22px;cursor:pointer;transition:all 0.2s;position:relative;overflow:hidden}
+  .account-card:hover{border-color:var(--border);transform:translateY(-1px)}
+  .account-card.selected{border-color:var(--accent)}
+  .acc-type{font-size:11px;text-transform:uppercase;letter-spacing:0.12em;color:var(--text3);margin-bottom:12px}
+  .acc-number{font-size:13px;color:var(--text2);font-family:monospace;margin-bottom:16px}
+  .acc-balance{font-family:'DM Serif Display',serif;font-size:24px;color:var(--accent)}
+  .acc-stripe{position:absolute;bottom:0;left:0;right:0;height:3px;background:linear-gradient(90deg,var(--accent),transparent)}
+  .acc-badge{display:inline-block;font-size:10px;padding:2px 8px;border-radius:20px;background:rgba(74,222,128,0.12);color:var(--green);font-weight:500;margin-top:8px;letter-spacing:0.04em}
+
+  /* TRANSACTIONS */
+  .txn-list{background:var(--bg2);border:1px solid var(--border2);border-radius:var(--r);overflow:hidden}
+  .txn-item{display:flex;align-items:center;gap:14px;padding:14px 20px;border-bottom:1px solid var(--border2);transition:background 0.1s;cursor:pointer}
+  .txn-item:last-child{border-bottom:none}
+  .txn-item:hover{background:var(--bg3)}
+  .txn-icon{width:38px;height:38px;border-radius:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:16px}
+  .txn-icon.in{background:var(--green-bg)}
+  .txn-icon.out{background:var(--red-bg)}
+  .txn-icon.fee{background:rgba(107,122,144,0.12)}
+  .txn-info{flex:1}
+  .txn-name{font-size:14px;font-weight:500;color:var(--text)}
+  .txn-date{font-size:12px;color:var(--text3);margin-top:1px}
+  .txn-amount{font-size:15px;font-weight:600;text-align:right}
+  .txn-amount.pos{color:var(--green)}
+  .txn-amount.neg{color:var(--red)}
+  .txn-status{font-size:10px;text-align:right;margin-top:2px;color:var(--text3)}
+
+  /* MODAL */
+  .modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.65);z-index:200;align-items:center;justify-content:center;backdrop-filter:blur(2px)}
+  .modal-overlay.open{display:flex}
+  .modal{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);width:420px;max-width:90vw;overflow:hidden;animation:slideUp 0.2s ease}
+  @keyframes slideUp{from{transform:translateY(16px);opacity:0}to{transform:translateY(0);opacity:1}}
+  .modal-head{padding:20px 24px;border-bottom:1px solid var(--border2);display:flex;align-items:center;justify-content:space-between}
+  .modal-title{font-family:'DM Serif Display',serif;font-size:18px}
+  .modal-close{background:none;border:none;color:var(--text3);cursor:pointer;font-size:20px;padding:0;line-height:1}
+  .modal-body{padding:24px}
+  .form-group{margin-bottom:18px}
+  .form-label{font-size:12px;color:var(--text3);letter-spacing:0.08em;text-transform:uppercase;margin-bottom:6px;display:block}
+  .form-input,.form-select{width:100%;background:var(--bg3);border:1px solid var(--border2);border-radius:var(--r2);padding:10px 14px;font-size:14px;color:var(--text);font-family:inherit;outline:none;transition:border-color 0.15s}
+  .form-input:focus,.form-select:focus{border-color:var(--accent)}
+  .form-select{-webkit-appearance:none;cursor:pointer}
+  .btn{width:100%;padding:12px;border-radius:var(--r2);border:none;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;letter-spacing:0.04em;transition:all 0.15s}
+  .btn-primary{background:linear-gradient(135deg,var(--accent),var(--accent-dim));color:#1a1000}
+  .btn-primary:hover{opacity:0.9}
+  .btn-ghost{background:var(--bg3);color:var(--text2);border:1px solid var(--border2)}
+  .btn-ghost:hover{border-color:var(--border);color:var(--text)}
+  .form-row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  .alert{padding:10px 14px;border-radius:var(--r3);font-size:13px;margin-bottom:16px;display:none}
+  .alert.success{background:var(--green-bg);color:var(--green);border:1px solid rgba(74,222,128,0.2);display:block}
+  .alert.error{background:var(--red-bg);color:var(--red);border:1px solid rgba(248,113,113,0.2);display:block}
+
+  /* MINI CHART */
+  .mini-chart{display:flex;align-items:flex-end;gap:3px;height:40px;margin-top:12px}
+  .bar{flex:1;background:rgba(201,169,110,0.3);border-radius:2px;transition:height 0.3s}
+  .bar.hi{background:var(--accent)}
+
+  /* QUICK ACTIONS */
+  .quick-actions{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:32px}
+  .qa-btn{background:var(--bg2);border:1px solid var(--border2);border-radius:var(--r);padding:18px 12px;cursor:pointer;text-align:center;transition:all 0.2s;display:flex;flex-direction:column;align-items:center;gap:8px}
+  .qa-btn:hover{border-color:var(--border);background:var(--bg3)}
+  .qa-icon{width:40px;height:40px;border-radius:10px;background:rgba(201,169,110,0.1);display:flex;align-items:center;justify-content:center;font-size:18px}
+  .qa-label{font-size:12px;color:var(--text2);font-weight:500}
+
+  /* PAGES */
+  .page{display:none}
+  .page.active{display:block}
+
+  /* ANALYTICS */
+  .chart-wrap{background:var(--bg2);border:1px solid var(--border2);border-radius:var(--r);padding:20px}
+  .big-chart{display:flex;align-items:flex-end;gap:6px;height:140px;padding-top:10px}
+  .big-bar{flex:1;border-radius:4px 4px 0 0;background:rgba(201,169,110,0.25);transition:all 0.3s;position:relative;cursor:pointer}
+  .big-bar:hover{background:var(--accent)}
+  .big-bar .tooltip{position:absolute;top:-28px;left:50%;transform:translateX(-50%);background:var(--bg4);border:1px solid var(--border);font-size:11px;padding:3px 8px;border-radius:4px;white-space:nowrap;display:none;z-index:10}
+  .big-bar:hover .tooltip{display:block}
+  .chart-labels{display:flex;gap:6px;margin-top:8px}
+  .chart-label{flex:1;text-align:center;font-size:11px;color:var(--text3)}
+
+  /* CARDS PAGE */
+  .bank-card{width:100%;max-width:340px;background:linear-gradient(135deg,#1a1200,#2a1f00,#1a1200);border:1px solid var(--accent-dim);border-radius:16px;padding:24px;position:relative;overflow:hidden;margin-bottom:20px}
+  .bank-card::before{content:'';position:absolute;top:-40px;right:-40px;width:130px;height:130px;background:radial-gradient(circle,rgba(201,169,110,0.15),transparent);border-radius:50%}
+  .card-chip{width:32px;height:24px;border-radius:4px;background:linear-gradient(135deg,#c9a96e,#8a6d3f);margin-bottom:20px}
+  .card-num{font-family:monospace;font-size:16px;letter-spacing:0.2em;color:var(--text);margin-bottom:20px}
+  .card-row{display:flex;justify-content:space-between;align-items:flex-end}
+  .card-label-s{font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:0.1em;margin-bottom:2px}
+  .card-val{font-size:13px;font-weight:500;color:var(--text)}
+  .card-brand{font-family:'DM Serif Display',serif;font-size:18px;color:var(--accent);opacity:0.7;letter-spacing:0.05em}
+
+  /* TABLE */
+  .data-table{width:100%;border-collapse:collapse;font-size:13px}
+  .data-table th{text-align:left;padding:10px 14px;font-size:11px;text-transform:uppercase;letter-spacing:0.1em;color:var(--text3);border-bottom:1px solid var(--border2);font-weight:500}
+  .data-table td{padding:12px 14px;border-bottom:1px solid var(--border2);color:var(--text2)}
+  .data-table tr:last-child td{border-bottom:none}
+  .data-table tr:hover td{background:var(--bg3)}
+  .badge{display:inline-block;font-size:10px;padding:2px 8px;border-radius:20px;font-weight:500;letter-spacing:0.04em}
+  .badge-green{background:var(--green-bg);color:var(--green)}
+  .badge-red{background:var(--red-bg);color:var(--red)}
+  .badge-amber{background:rgba(251,191,36,0.1);color:#fbbf24}
+
+  /* LOANS */
+  .loan-card{background:var(--bg2);border:1px solid var(--border2);border-radius:var(--r);padding:20px;margin-bottom:16px}
+  .loan-prog{height:6px;background:var(--bg4);border-radius:3px;margin:12px 0;overflow:hidden}
+  .loan-prog-fill{height:100%;border-radius:3px;background:linear-gradient(90deg,var(--accent),var(--accent-dim))}
+  .prog-label{display:flex;justify-content:space-between;font-size:11px;color:var(--text3)}
+
+  .toast{position:fixed;bottom:24px;right:24px;background:var(--bg3);border:1px solid var(--border);border-radius:var(--r2);padding:12px 18px;font-size:13px;z-index:999;transform:translateY(60px);opacity:0;transition:all 0.3s;pointer-events:none}
+  .toast.show{transform:translateY(0);opacity:1}
+</style>
+</head>
+<body>
+<div class="app">
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="logo">
+      <div class="logo-text">Hero Bank System</div>
+      <div class="logo-sub">Private Banking</div>
+    </div>
+    <nav class="nav">
+      <div class="nav-label">Main</div>
+      <div class="nav-item active" onclick="goPage('dashboard',this)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>
+        Dashboard
+      </div>
+      <div class="nav-item" onclick="goPage('accounts',this)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="2" y="6" width="20" height="14" rx="2"/><path d="M16 6V4a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/><line x1="12" y1="11" x2="12" y2="17"/><line x1="9" y1="14" x2="15" y2="14"/></svg>
+        Accounts
+      </div>
+      <div class="nav-item" onclick="goPage('transfer',this)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M8 3L4 7l4 4"/><path d="M4 7h16"/><path d="M16 21l4-4-4-4"/><path d="M20 17H4"/></svg>
+        Transfer
+      </div>
+      <div class="nav-item" onclick="goPage('cards',this)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg>
+        Cards
+      </div>
+      <div class="nav-label">Finance</div>
+      <div class="nav-item" onclick="goPage('analytics',this)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+        Analytics
+      </div>
+      <div class="nav-item" onclick="goPage('loans',this)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
+        Loans
+      </div>
+      <div class="nav-label">Support</div>
+      <div class="nav-item" onclick="goPage('settings',this)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+        Settings
+      </div>
+    </nav>
+    <div class="sidebar-footer">
+      <div class="user-info">
+        <div class="avatar">AK</div>
+        <div>
+          <div class="user-name">Arjun Kumar</div>
+          <div class="user-id">ACC-00291847</div>
+        </div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- MAIN CONTENT -->
+  <main class="main">
+
+    <!-- DASHBOARD PAGE -->
+    <div id="page-dashboard" class="page active">
+      <div class="topbar">
+        <div>
+          <div class="page-title">Good morning, Arjun</div>
+          <div class="page-sub">Thursday, 30 April 2026 · Premium Member</div>
+        </div>
+        <div class="topbar-right">
+          <div class="notif-btn"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg><div class="notif-dot"></div></div>
+        </div>
+      </div>
+
+      <div class="cards-grid">
+        <div class="stat-card accent-card">
+          <div class="stat-label">Total Balance</div>
+          <div class="stat-value gold" id="total-balance">₹4,82,350.00</div>
+          <div class="stat-change">↑ 3.2% this month</div>
+          <div class="mini-chart">
+            <div class="bar" style="height:30%"></div><div class="bar" style="height:45%"></div><div class="bar" style="height:38%"></div><div class="bar" style="height:60%"></div><div class="bar" style="height:50%"></div><div class="bar" style="height:72%"></div><div class="bar hi" style="height:100%"></div>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Monthly Income</div>
+          <div class="stat-value">₹1,20,000</div>
+          <div class="stat-change">↑ 8% vs last month</div>
+          <div class="card-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg></div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Monthly Spending</div>
+          <div class="stat-value">₹34,820</div>
+          <div class="stat-change neg">↑ 12% vs last month</div>
+          <div class="card-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><line x1="12" y1="5" x2="12" y2="19"/><polyline points="19 12 12 19 5 12"/></svg></div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Savings Rate</div>
+          <div class="stat-value">71%</div>
+          <div class="stat-change">↑ Excellent health</div>
+          <div class="card-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg></div>
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="section-head">
+          <div class="section-title">Quick Actions</div>
+        </div>
+        <div class="quick-actions">
+          <div class="qa-btn" onclick="openModal('transfer-modal')">
+            <div class="qa-icon">↗</div>
+            <div class="qa-label">Send Money</div>
+          </div>
+          <div class="qa-btn" onclick="openModal('deposit-modal')">
+            <div class="qa-icon">↙</div>
+            <div class="qa-label">Add Money</div>
+          </div>
+          <div class="qa-btn" onclick="goPage('cards',document.querySelector('[onclick*=cards]'))">
+            <div class="qa-icon">💳</div>
+            <div class="qa-label">My Cards</div>
+          </div>
+          <div class="qa-btn" onclick="openModal('loan-modal')">
+            <div class="qa-icon">📋</div>
+            <div class="qa-label">Apply Loan</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="section-head">
+          <div class="section-title">Recent Transactions</div>
+          <button class="link-btn" onclick="goPage('accounts',document.querySelectorAll('.nav-item')[1])">View all</button>
+        </div>
+        <div class="txn-list" id="txn-list-dashboard"></div>
+      </div>
+    </div>
+
+    <!-- ACCOUNTS PAGE -->
+    <div id="page-accounts" class="page">
+      <div class="topbar">
+        <div>
+          <div class="page-title">Accounts</div>
+          <div class="page-sub">Manage your bank accounts</div>
+        </div>
+        <button class="btn btn-primary" style="width:auto;padding:10px 20px" onclick="openModal('new-account-modal')">+ New Account</button>
+      </div>
+      <div class="section">
+        <div class="accounts-row" id="accounts-list"></div>
+      </div>
+      <div class="section">
+        <div class="section-head">
+          <div class="section-title">All Transactions</div>
+          <button class="link-btn" onclick="openModal('transfer-modal')">New Transfer</button>
+        </div>
+        <div class="txn-list" id="txn-list-full"></div>
+      </div>
+    </div>
+
+    <!-- TRANSFER PAGE -->
+    <div id="page-transfer" class="page">
+      <div class="topbar">
+        <div>
+          <div class="page-title">Transfer Funds</div>
+          <div class="page-sub">Send money securely</div>
+        </div>
+      </div>
+      <div style="max-width:480px">
+        <div class="chart-wrap">
+          <div id="transfer-alert"></div>
+          <div class="form-group">
+            <label class="form-label">From Account</label>
+            <select class="form-select" id="t-from">
+              <option value="savings">Savings — ₹3,50,000</option>
+              <option value="current">Current — ₹1,32,350</option>
+              <option value="fd">Fixed Deposit — ₹2,00,000</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">To Account / Beneficiary</label>
+            <input class="form-input" id="t-to" placeholder="Account number or UPI ID" />
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Amount (₹)</label>
+              <input class="form-input" id="t-amount" type="number" placeholder="0.00" />
+            </div>
+            <div class="form-group">
+              <label class="form-label">Mode</label>
+              <select class="form-select" id="t-mode">
+                <option>NEFT</option>
+                <option>IMPS</option>
+                <option>RTGS</option>
+                <option>UPI</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Remarks (optional)</label>
+            <input class="form-input" id="t-note" placeholder="Add a note" />
+          </div>
+          <button class="btn btn-primary" onclick="doTransfer()">Confirm Transfer →</button>
+        </div>
+        <div style="margin-top:20px">
+          <div class="section-title" style="margin-bottom:12px;font-size:15px">Recent Beneficiaries</div>
+          <div style="display:flex;gap:12px;flex-wrap:wrap">
+            <div style="text-align:center;cursor:pointer" onclick="document.getElementById('t-to').value='priya@upi'">
+              <div class="avatar" style="margin:0 auto 6px;background:#1f2a1a">PK</div>
+              <div style="font-size:11px;color:var(--text3)">Priya K.</div>
+            </div>
+            <div style="text-align:center;cursor:pointer" onclick="document.getElementById('t-to').value='9876543210@okaxis'">
+              <div class="avatar" style="margin:0 auto 6px;background:#1a1f2a">RS</div>
+              <div style="font-size:11px;color:var(--text3)">Rahul S.</div>
+            </div>
+            <div style="text-align:center;cursor:pointer" onclick="document.getElementById('t-to').value='meena.r@ybl'">
+              <div class="avatar" style="margin:0 auto 6px;background:#2a1a1a">MR</div>
+              <div style="font-size:11px;color:var(--text3)">Meena R.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- CARDS PAGE -->
+    <div id="page-cards" class="page">
+      <div class="topbar">
+        <div><div class="page-title">My Cards</div><div class="page-sub">Manage debit & credit cards</div></div>
+        <button class="btn btn-primary" style="width:auto;padding:10px 20px" onclick="showToast('Card request submitted!')">Request New Card</button>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:24px;align-items:start">
+        <div>
+          <div class="bank-card">
+            <div class="card-chip"></div>
+            <div class="card-num">4523 •••• •••• 8821</div>
+            <div class="card-row">
+              <div><div class="card-label-s">Card Holder</div><div class="card-val">Arjun Kumar</div></div>
+              <div><div class="card-label-s">Expires</div><div class="card-val">08/29</div></div>
+              <div class="card-brand">VISA</div>
+            </div>
+          </div>
+          <div class="bank-card" style="background:linear-gradient(135deg,#0a1020,#10182e,#0a1020)">
+            <div class="card-chip" style="background:linear-gradient(135deg,#6b80c9,#3a4f9a)"></div>
+            <div class="card-num" style="color:#8fa0d0">6034 •••• •••• 3312</div>
+            <div class="card-row">
+              <div><div class="card-label-s">Card Holder</div><div class="card-val" style="color:#8fa0d0">Arjun Kumar</div></div>
+              <div><div class="card-label-s">Expires</div><div class="card-val" style="color:#8fa0d0">11/27</div></div>
+              <div style="font-family:'DM Serif Display',serif;font-size:18px;color:#6b80c9;opacity:0.7">RUPAY</div>
+            </div>
+          </div>
+        </div>
+        <div>
+          <div class="chart-wrap" style="margin-bottom:16px">
+            <div style="font-size:13px;font-weight:500;margin-bottom:14px">Card Controls</div>
+            <div style="display:flex;flex-direction:column;gap:12px">
+              <div style="display:flex;justify-content:space-between;align-items:center;padding:12px;background:var(--bg3);border-radius:var(--r2)">
+                <div style="font-size:13px">Online Transactions</div>
+                <div class="toggle-sw active" onclick="toggleSwitch(this)" style="width:36px;height:20px;background:var(--accent);border-radius:10px;cursor:pointer;position:relative;transition:background 0.2s"><div style="position:absolute;top:3px;right:3px;width:14px;height:14px;background:#fff;border-radius:50%;transition:all 0.2s"></div></div>
+              </div>
+              <div style="display:flex;justify-content:space-between;align-items:center;padding:12px;background:var(--bg3);border-radius:var(--r2)">
+                <div style="font-size:13px">International Use</div>
+                <div class="toggle-sw" onclick="toggleSwitch(this)" style="width:36px;height:20px;background:var(--bg4);border-radius:10px;cursor:pointer;position:relative;transition:background 0.2s"><div style="position:absolute;top:3px;left:3px;width:14px;height:14px;background:#fff;border-radius:50%;transition:all 0.2s"></div></div>
+              </div>
+              <div style="display:flex;justify-content:space-between;align-items:center;padding:12px;background:var(--bg3);border-radius:var(--r2)">
+                <div style="font-size:13px">Contactless Pay</div>
+                <div class="toggle-sw active" onclick="toggleSwitch(this)" style="width:36px;height:20px;background:var(--accent);border-radius:10px;cursor:pointer;position:relative;transition:background 0.2s"><div style="position:absolute;top:3px;right:3px;width:14px;height:14px;background:#fff;border-radius:50%;transition:all 0.2s"></div></div>
+              </div>
+              <div style="display:flex;justify-content:space-between;align-items:center;padding:12px;background:var(--bg3);border-radius:var(--r2)">
+                <div style="font-size:13px">ATM Withdrawals</div>
+                <div class="toggle-sw active" onclick="toggleSwitch(this)" style="width:36px;height:20px;background:var(--accent);border-radius:10px;cursor:pointer;position:relative;transition:background 0.2s"><div style="position:absolute;top:3px;right:3px;width:14px;height:14px;background:#fff;border-radius:50%;transition:all 0.2s"></div></div>
+              </div>
+            </div>
+          </div>
+          <div class="chart-wrap">
+            <div style="font-size:13px;font-weight:500;margin-bottom:12px">Spending Limit</div>
+            <div style="font-size:11px;color:var(--text3);margin-bottom:6px">Daily limit: ₹50,000</div>
+            <div class="loan-prog"><div class="loan-prog-fill" style="width:62%"></div></div>
+            <div class="prog-label"><span>₹31,200 used</span><span>₹18,800 left</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ANALYTICS PAGE -->
+    <div id="page-analytics" class="page">
+      <div class="topbar"><div><div class="page-title">Analytics</div><div class="page-sub">Financial insights & trends</div></div></div>
+      <div style="display:grid;grid-template-columns:2fr 1fr;gap:20px;margin-bottom:24px">
+        <div class="chart-wrap">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+            <div style="font-size:14px;font-weight:500">Monthly Cash Flow</div>
+            <div style="display:flex;gap:6px">
+              <span style="font-size:11px;padding:3px 10px;border-radius:20px;background:var(--bg4);color:var(--text2);cursor:pointer">6M</span>
+              <span style="font-size:11px;padding:3px 10px;border-radius:20px;background:var(--accent);color:#1a1000;cursor:pointer">1Y</span>
+            </div>
+          </div>
+          <div class="big-chart" id="big-chart"></div>
+          <div class="chart-labels" id="chart-labels"></div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:16px">
+          <div class="chart-wrap" style="flex:1">
+            <div style="font-size:13px;font-weight:500;margin-bottom:12px">Spending by Category</div>
+            <div id="cat-list"></div>
+          </div>
+        </div>
+      </div>
+      <div class="chart-wrap">
+        <div style="font-size:14px;font-weight:500;margin-bottom:16px">Transaction Summary</div>
+        <div style="overflow-x:auto"><table class="data-table" id="analytics-table"></table></div>
+      </div>
+    </div>
+
+    <!-- LOANS PAGE -->
+    <div id="page-loans" class="page">
+      <div class="topbar"><div><div class="page-title">Loans & Credit</div><div class="page-sub">Your borrowing overview</div></div>
+      <button class="btn btn-primary" style="width:auto;padding:10px 20px" onclick="openModal('loan-modal')">Apply for Loan</button>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:24px">
+        <div class="stat-card"><div class="stat-label">Total Outstanding</div><div class="stat-value" style="font-size:22px">₹8,50,000</div><div style="font-size:12px;color:var(--text3);margin-top:4px">Across 2 loans</div></div>
+        <div class="stat-card"><div class="stat-label">Monthly EMI</div><div class="stat-value" style="font-size:22px">₹22,450</div><div style="font-size:12px;color:var(--green);margin-top:4px">Next due: 5 May</div></div>
+        <div class="stat-card"><div class="stat-label">Credit Score</div><div class="stat-value" style="font-size:22px;color:var(--green)">792</div><div style="font-size:12px;color:var(--green);margin-top:4px">Excellent</div></div>
+      </div>
+      <div class="loan-card">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start">
+          <div><div style="font-size:14px;font-weight:500">Home Loan</div><div style="font-size:12px;color:var(--text3);margin-top:2px">HDFC Bank · 8.5% p.a.</div></div>
+          <span class="badge badge-green">Active</span>
+        </div>
+        <div class="loan-prog"><div class="loan-prog-fill" style="width:38%"></div></div>
+        <div class="prog-label"><span>₹7,60,000 remaining</span><span>38% paid</span></div>
+        <div style="display:flex;gap:20px;margin-top:12px;font-size:13px">
+          <div><div style="color:var(--text3);font-size:11px">EMI</div><div style="font-weight:500">₹18,200</div></div>
+          <div><div style="color:var(--text3);font-size:11px">Tenure Left</div><div style="font-weight:500">14 yrs</div></div>
+          <div><div style="color:var(--text3);font-size:11px">Principal</div><div style="font-weight:500">₹20,00,000</div></div>
+        </div>
+      </div>
+      <div class="loan-card">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start">
+          <div><div style="font-size:14px;font-weight:500">Personal Loan</div><div style="font-size:12px;color:var(--text3);margin-top:2px">Hero Bank System · 12% p.a.</div></div>
+          <span class="badge badge-amber">3 EMIs due</span>
+        </div>
+        <div class="loan-prog"><div class="loan-prog-fill" style="width:75%"></div></div>
+        <div class="prog-label"><span>₹90,000 remaining</span><span>75% paid</span></div>
+        <div style="display:flex;gap:20px;margin-top:12px;font-size:13px">
+          <div><div style="color:var(--text3);font-size:11px">EMI</div><div style="font-weight:500">₹4,250</div></div>
+          <div><div style="color:var(--text3);font-size:11px">Tenure Left</div><div style="font-weight:500">8 months</div></div>
+          <div><div style="color:var(--text3);font-size:11px">Principal</div><div style="font-weight:500">₹3,60,000</div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SETTINGS PAGE -->
+    <div id="page-settings" class="page">
+      <div class="topbar"><div><div class="page-title">Settings</div><div class="page-sub">Manage your profile & preferences</div></div></div>
+      <div style="max-width:520px">
+        <div class="chart-wrap" style="margin-bottom:16px">
+          <div style="font-size:14px;font-weight:500;margin-bottom:16px">Personal Information</div>
+          <div class="form-group"><label class="form-label">Full Name</label><input class="form-input" value="Arjun Kumar" /></div>
+          <div class="form-row">
+            <div class="form-group"><label class="form-label">Email</label><input class="form-input" value="arjun.k@email.com" /></div>
+            <div class="form-group"><label class="form-label">Phone</label><input class="form-input" value="+91 98765 43210" /></div>
+          </div>
+          <div class="form-group"><label class="form-label">PAN Number</label><input class="form-input" value="ABCDE1234F" /></div>
+          <button class="btn btn-primary" onclick="showToast('Profile updated successfully!')">Save Changes</button>
+        </div>
+        <div class="chart-wrap" style="margin-bottom:16px">
+          <div style="font-size:14px;font-weight:500;margin-bottom:16px">Security</div>
+          <div style="display:flex;flex-direction:column;gap:10px">
+            <div style="display:flex;justify-content:space-between;align-items:center;padding:12px;background:var(--bg3);border-radius:var(--r2);cursor:pointer" onclick="showToast('OTP sent to your phone')">
+              <div style="font-size:13px">Change MPIN</div>
+              <div style="font-size:12px;color:var(--accent)">Update →</div>
+            </div>
+            <div style="display:flex;justify-content:space-between;align-items:center;padding:12px;background:var(--bg3);border-radius:var(--r2);cursor:pointer" onclick="showToast('Biometric settings updated')">
+              <div style="font-size:13px">Biometric Login</div>
+              <div class="toggle-sw active" onclick="toggleSwitch(this)" style="width:36px;height:20px;background:var(--accent);border-radius:10px;cursor:pointer;position:relative;transition:background 0.2s"><div style="position:absolute;top:3px;right:3px;width:14px;height:14px;background:#fff;border-radius:50%;transition:all 0.2s"></div></div>
+            </div>
+            <div style="display:flex;justify-content:space-between;align-items:center;padding:12px;background:var(--bg3);border-radius:var(--r2);cursor:pointer">
+              <div style="font-size:13px">Two-Factor Authentication</div>
+              <div class="toggle-sw active" onclick="toggleSwitch(this)" style="width:36px;height:20px;background:var(--accent);border-radius:10px;cursor:pointer;position:relative;transition:background 0.2s"><div style="position:absolute;top:3px;right:3px;width:14px;height:14px;background:#fff;border-radius:50%;transition:all 0.2s"></div></div>
+            </div>
+          </div>
+        </div>
+        <div class="chart-wrap">
+          <div style="font-size:14px;font-weight:500;margin-bottom:16px">Notifications</div>
+          <div style="display:flex;flex-direction:column;gap:10px">
+            <div style="display:flex;justify-content:space-between;align-items:center;padding:12px;background:var(--bg3);border-radius:var(--r2)">
+              <div><div style="font-size:13px">Transaction Alerts</div><div style="font-size:11px;color:var(--text3)">SMS & Email</div></div>
+              <div class="toggle-sw active" onclick="toggleSwitch(this)" style="width:36px;height:20px;background:var(--accent);border-radius:10px;cursor:pointer;position:relative;transition:background 0.2s"><div style="position:absolute;top:3px;right:3px;width:14px;height:14px;background:#fff;border-radius:50%;transition:all 0.2s"></div></div>
+            </div>
+            <div style="display:flex;justify-content:space-between;align-items:center;padding:12px;background:var(--bg3);border-radius:var(--r2)">
+              <div><div style="font-size:13px">Marketing Offers</div><div style="font-size:11px;color:var(--text3)">Promotional emails</div></div>
+              <div class="toggle-sw" onclick="toggleSwitch(this)" style="width:36px;height:20px;background:var(--bg4);border-radius:10px;cursor:pointer;position:relative;transition:background 0.2s"><div style="position:absolute;top:3px;left:3px;width:14px;height:14px;background:#fff;border-radius:50%;transition:all 0.2s"></div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<!-- MODALS -->
+<!-- Transfer Modal -->
+<div class="modal-overlay" id="transfer-modal">
+  <div class="modal">
+    <div class="modal-head"><div class="modal-title">Send Money</div><button class="modal-close" onclick="closeModal('transfer-modal')">×</button></div>
+    <div class="modal-body">
+      <div id="transfer-alert-modal"></div>
+      <div class="form-group"><label class="form-label">From Account</label>
+        <select class="form-select" id="m-from">
+          <option value="savings">Savings — ₹3,50,000</option>
+          <option value="current">Current — ₹1,32,350</option>
+        </select>
+      </div>
+      <div class="form-group"><label class="form-label">To (Account / UPI)</label><input class="form-input" id="m-to" placeholder="e.g. 9876543210@upi" /></div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Amount (₹)</label><input class="form-input" id="m-amount" type="number" placeholder="0" /></div>
+        <div class="form-group"><label class="form-label">Mode</label>
+          <select class="form-select" id="m-mode"><option>UPI</option><option>IMPS</option><option>NEFT</option></select>
+        </div>
+      </div>
+      <div style="display:flex;gap:10px">
+        <button class="btn btn-ghost" onclick="closeModal('transfer-modal')" style="flex:1">Cancel</button>
+        <button class="btn btn-primary" onclick="doModalTransfer()" style="flex:2">Transfer</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Deposit Modal -->
+<div class="modal-overlay" id="deposit-modal">
+  <div class="modal">
+    <div class="modal-head"><div class="modal-title">Add Money</div><button class="modal-close" onclick="closeModal('deposit-modal')">×</button></div>
+    <div class="modal-body">
+      <div class="form-group"><label class="form-label">To Account</label>
+        <select class="form-select">
+          <option>Savings Account</option><option>Current Account</option>
+        </select>
+      </div>
+      <div class="form-group"><label class="form-label">Amount (₹)</label><input class="form-input" id="d-amount" type="number" placeholder="Enter amount" /></div>
+      <div class="form-group"><label class="form-label">Payment Method</label>
+        <select class="form-select"><option>Net Banking</option><option>UPI</option><option>Debit Card</option></select>
+      </div>
+      <button class="btn btn-primary" onclick="doDeposit()">Add Money</button>
+    </div>
+  </div>
+</div>
+
+<!-- Loan Modal -->
+<div class="modal-overlay" id="loan-modal">
+  <div class="modal">
+    <div class="modal-head"><div class="modal-title">Apply for Loan</div><button class="modal-close" onclick="closeModal('loan-modal')">×</button></div>
+    <div class="modal-body">
+      <div class="form-group"><label class="form-label">Loan Type</label>
+        <select class="form-select"><option>Personal Loan</option><option>Home Loan</option><option>Car Loan</option><option>Education Loan</option></select>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Amount (₹)</label><input class="form-input" type="number" placeholder="e.g. 500000" /></div>
+        <div class="form-group"><label class="form-label">Tenure (Months)</label><input class="form-input" type="number" placeholder="e.g. 24" /></div>
+      </div>
+      <div class="form-group"><label class="form-label">Purpose</label><input class="form-input" placeholder="Brief description" /></div>
+      <button class="btn btn-primary" onclick="closeModal('loan-modal');showToast('Loan application submitted! We will review within 24 hours.')">Submit Application</button>
+    </div>
+  </div>
+</div>
+
+<!-- New Account Modal -->
+<div class="modal-overlay" id="new-account-modal">
+  <div class="modal">
+    <div class="modal-head"><div class="modal-title">Open New Account</div><button class="modal-close" onclick="closeModal('new-account-modal')">×</button></div>
+    <div class="modal-body">
+      <div class="form-group"><label class="form-label">Account Type</label>
+        <select class="form-select"><option>Savings Account</option><option>Current Account</option><option>Fixed Deposit</option><option>Recurring Deposit</option></select>
+      </div>
+      <div class="form-group"><label class="form-label">Initial Deposit (₹)</label><input class="form-input" type="number" placeholder="Minimum ₹1,000" /></div>
+      <div class="form-group"><label class="form-label">Branch</label>
+        <select class="form-select"><option>Mysuru Main Branch</option><option>Jayalakshmipuram</option><option>Vijayanagar</option></select>
+      </div>
+      <button class="btn btn-primary" onclick="closeModal('new-account-modal');showToast('Account opening request received!')">Open Account</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const txns=[
+  {name:'Salary Credit',date:'30 Apr 2026',amount:120000,type:'in',cat:'Income',status:'Completed'},
+  {name:'Amazon Shopping',date:'29 Apr 2026',amount:-3450,type:'out',cat:'Shopping',status:'Completed'},
+  {name:'Swiggy Order',date:'28 Apr 2026',amount:-680,type:'out',cat:'Food',status:'Completed'},
+  {name:'BESCOM Bill',date:'27 Apr 2026',amount:-2100,type:'out',cat:'Utilities',status:'Completed'},
+  {name:'UPI Transfer – Priya',date:'26 Apr 2026',amount:-5000,type:'out',cat:'Transfer',status:'Completed'},
+  {name:'Interest Credit',date:'25 Apr 2026',amount:1820,type:'in',cat:'Interest',status:'Completed'},
+  {name:'Netflix Subscription',date:'24 Apr 2026',amount:-649,type:'out',cat:'Entertainment',status:'Completed'},
+  {name:'Petrol – BPCL',date:'23 Apr 2026',amount:-2200,type:'out',cat:'Transport',status:'Completed'},
+  {name:'Freelance Payment',date:'22 Apr 2026',amount:25000,type:'in',cat:'Income',status:'Completed'},
+  {name:'Gym Membership',date:'20 Apr 2026',amount:-1500,type:'out',cat:'Health',status:'Completed'},
+];
+
+const accounts=[
+  {type:'Savings Account',number:'•••• •••• 4821',balance:'₹3,50,000.00',status:'Active'},
+  {type:'Current Account',number:'•••• •••• 9012',balance:'₹1,32,350.00',status:'Active'},
+  {type:'Fixed Deposit',number:'•••• •••• 3344',balance:'₹2,00,000.00',status:'Maturity: Dec 2026'},
+];
+
+function renderTxns(id,limit){
+  const el=document.getElementById(id);if(!el)return;
+  const list=limit?txns.slice(0,limit):txns;
+  el.innerHTML=list.map(t=>`
+    <div class="txn-item">
+      <div class="txn-icon ${t.type}">${t.type==='in'?'↓':'↑'}</div>
+      <div class="txn-info"><div class="txn-name">${t.name}</div><div class="txn-date">${t.date} · ${t.cat}</div></div>
+      <div><div class="txn-amount ${t.type==='in'?'pos':'neg'}">${t.type==='in'?'+':'-'}₹${Math.abs(t.amount).toLocaleString('en-IN')}</div><div class="txn-status">${t.status}</div></div>
+    </div>`).join('');
+}
+
+function renderAccounts(){
+  const el=document.getElementById('accounts-list');if(!el)return;
+  el.innerHTML=accounts.map((a,i)=>`
+    <div class="account-card ${i===0?'selected':''}">
+      <div class="acc-type">${a.type}</div>
+      <div class="acc-number">${a.number}</div>
+      <div class="acc-balance">${a.balance}</div>
+      <div class="acc-badge">${a.status}</div>
+      <div class="acc-stripe"></div>
+    </div>`).join('');
+}
+
+function renderAnalytics(){
+  const months=['May','Jun','Jul','Aug','Sep','Oct','Nov','Dec','Jan','Feb','Mar','Apr'];
+  const vals=[82,95,78,110,88,102,115,98,120,105,118,125];
+  const max=Math.max(...vals);
+  const bc=document.getElementById('big-chart');
+  const bl=document.getElementById('chart-labels');
+  if(bc){
+    bc.innerHTML=vals.map((v,i)=>`<div class="big-bar" style="height:${(v/max*100).toFixed(0)}%"><div class="tooltip">₹${v}K</div></div>`).join('');
+    bl.innerHTML=months.map(m=>`<div class="chart-label">${m}</div>`).join('');
+  }
+  const cats=[
+    {name:'Food & Dining',pct:28,color:'var(--accent)'},
+    {name:'Shopping',pct:22,color:'#6b80c9'},
+    {name:'Utilities',pct:18,color:'#4ade80'},
+    {name:'Transport',pct:14,color:'#f87171'},
+    {name:'Entertainment',pct:10,color:'#fbbf24'},
+    {name:'Others',pct:8,color:'var(--text3)'},
+  ];
+  const cl=document.getElementById('cat-list');
+  if(cl){cl.innerHTML=cats.map(c=>`<div style="margin-bottom:10px"><div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px"><span style="color:var(--text2)">${c.name}</span><span style="color:var(--text3)">${c.pct}%</span></div><div style="height:4px;background:var(--bg4);border-radius:2px"><div style="height:100%;width:${c.pct}%;background:${c.color};border-radius:2px"></div></div></div>`).join('');}
+  const at=document.getElementById('analytics-table');
+  if(at){at.innerHTML=`<thead><tr><th>Month</th><th>Income</th><th>Expenses</th><th>Savings</th><th>Status</th></tr></thead><tbody>${months.slice(-6).map((m,i)=>{const inc=100000+i*5000;const exp=30000+i*2000;const sav=inc-exp;return`<tr><td>${m} 2026</td><td style="color:var(--green)">₹${inc.toLocaleString('en-IN')}</td><td style="color:var(--red)">₹${exp.toLocaleString('en-IN')}</td><td>₹${sav.toLocaleString('en-IN')}</td><td><span class="badge badge-green">Surplus</span></td></tr>`}).join('')}</tbody>`;}
+}
+
+function goPage(id,el){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  document.getElementById('page-'+id).classList.add('active');
+  if(el)el.classList.add('active');
+  if(id==='analytics')renderAnalytics();
+}
+
+function openModal(id){document.getElementById(id).classList.add('open')}
+function closeModal(id){document.getElementById(id).classList.remove('open')}
+document.querySelectorAll('.modal-overlay').forEach(m=>{m.addEventListener('click',e=>{if(e.target===m)m.classList.remove('open')})});
+
+function showToast(msg){
+  const t=document.getElementById('toast');
+  t.textContent=msg;t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),3000);
+}
+
+function toggleSwitch(el){
+  const isActive=el.classList.toggle('active');
+  el.style.background=isActive?'var(--accent)':'var(--bg4)';
+  const dot=el.querySelector('div');
+  dot.style.left=isActive?'auto':'3px';
+  dot.style.right=isActive?'3px':'auto';
+}
+
+function doTransfer(){
+  const to=document.getElementById('t-to').value;
+  const amt=document.getElementById('t-amount').value;
+  const alert=document.getElementById('transfer-alert');
+  if(!to||!amt){alert.className='alert error';alert.textContent='Please fill all required fields.';return;}
+  alert.className='alert success';alert.textContent=`₹${parseFloat(amt).toLocaleString('en-IN')} transferred successfully via ${document.getElementById('t-mode').value}!`;
+  addTxn(`Transfer to ${to}`,parseFloat(amt),'out');
+  document.getElementById('t-to').value='';document.getElementById('t-amount').value='';
+}
+
+function doModalTransfer(){
+  const to=document.getElementById('m-to').value;
+  const amt=document.getElementById('m-amount').value;
+  const alert=document.getElementById('transfer-alert-modal');
+  if(!to||!amt){alert.className='alert error';alert.textContent='Please fill all fields.';return;}
+  closeModal('transfer-modal');
+  showToast(`₹${parseFloat(amt).toLocaleString('en-IN')} sent to ${to}!`);
+  addTxn(`UPI to ${to}`,parseFloat(amt),'out');
+  document.getElementById('m-to').value='';document.getElementById('m-amount').value='';
+}
+
+function doDeposit(){
+  const amt=document.getElementById('d-amount').value;
+  if(!amt){showToast('Enter an amount.');return;}
+  closeModal('deposit-modal');
+  showToast(`₹${parseFloat(amt).toLocaleString('en-IN')} added to your account!`);
+  addTxn('Account Top-up',parseFloat(amt),'in');
+}
+
+function addTxn(name,amount,type){
+  txns.unshift({name,date:'Today',amount:type==='out'?-amount:amount,type,cat:'Transfer',status:'Completed'});
+  renderTxns('txn-list-dashboard',5);
+  renderTxns('txn-list-full');
+}
+
+// Init
+renderTxns('txn-list-dashboard',5);
+renderTxns('txn-list-full');
+renderAccounts();
+</script>
+</body>
+</html>

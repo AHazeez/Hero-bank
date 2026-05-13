@@ -1,0 +1,89 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  *, *::before, *::after {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+  }
+  
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--color-bg);
+    color: var(--color-text);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+}
+
+@layer components {
+  .sidebar {
+    @apply w-60 bg-bg2 border-r border-border2 flex flex-col p-0 flex-shrink-0 fixed h-full z-100;
+  }
+  
+  .nav-item {
+    @apply flex items-center gap-2.5 p-2.5 rounded-r3 cursor-pointer text-sm font-normal text-text2 transition-all duration-150 mb-0.5 select-none;
+  }
+  
+  .nav-item:hover {
+    @apply bg-bg3 text-text;
+  }
+  
+  .nav-item.active {
+    @apply bg-gradient-to-r from-accent/18 to-accent/6 text-accent font-medium;
+  }
+  
+  .stat-card {
+    @apply bg-bg2 border border-border2 rounded-r p-5 relative overflow-hidden cursor-pointer transition-colors duration-200;
+  }
+  
+  .stat-card:hover {
+    @apply border-border;
+  }
+  
+  .btn {
+    @apply w-full py-3 rounded-r2 border-none text-sm font-semibold cursor-pointer font-inherit tracking-wider transition-all duration-150;
+  }
+  
+  .btn-primary {
+    @apply bg-gradient-to-r from-accent to-accent-dim text-[#1a1000];
+  }
+  
+  .btn-primary:hover {
+    @apply opacity-90;
+  }
+  
+  .btn-ghost {
+    @apply bg-bg3 text-text2 border border-border2;
+  }
+  
+  .btn-ghost:hover {
+    @apply border-border text-text;
+  }
+  
+  .form-input, .form-select {
+    @apply w-full bg-bg3 border border-border2 rounded-r2 p-2.5 text-sm text-text font-inherit outline-none transition-colors duration-150;
+  }
+  
+  .form-input:focus, .form-select:focus {
+    @apply border-accent;
+  }
+  
+  .modal-overlay {
+    @apply fixed inset-0 bg-black/65 z-200 flex items-center justify-center backdrop-blur-sm;
+  }
+  
+  .modal {
+    @apply bg-bg2 border border-border rounded-r w-[420px] max-w-[90vw] overflow-hidden;
+  }
+  
+  .page {
+    @apply hidden;
+  }
+  
+  .page.active {
+    @apply block;
+  }
+}
