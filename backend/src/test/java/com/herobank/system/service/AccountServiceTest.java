@@ -1,20 +1,23 @@
 package com.herobank.system.service;
 
+import com.herobank.system.common.exception.AppException;
+import com.herobank.system.modules.accounts.dto.AccountResponse;
+import com.herobank.system.modules.accounts.dto.AccountTypeInput;
 import com.herobank.system.modules.accounts.dto.CreateAccountRequest;
 import com.herobank.system.modules.accounts.model.Account;
 import com.herobank.system.modules.accounts.model.AccountType;
 import com.herobank.system.modules.accounts.repository.AccountRepository;
 import com.herobank.system.modules.accounts.service.AccountService;
 import com.herobank.system.modules.users.model.User;
-import com.herobank.system.modules.users.repository.UserRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.test.util.ReflectionTestUtils;
 
-import java.math.BigDecimal;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
@@ -29,9 +32,6 @@ public class AccountServiceTest {
     @Mock
     private AccountRepository accountRepository;
 
-    @Mock
-    private UserRepository userRepository;
-
     @InjectMocks
     private AccountService accountService;
 
@@ -41,123 +41,85 @@ public class AccountServiceTest {
     @BeforeEach
     public void setUp() {
         testUser = new User();
-        testUser.setId("user-123");
+        ReflectionTestUtils.setField(testUser, "id", 1L);
         testUser.setFullName("Test User");
         testUser.setEmail("test@example.com");
 
         testAccount = new Account();
-        testAccount.setId("acc-123");
-        testAccount.setAccountNumber("ACC001234567");
-        testAccount.setType(AccountType.SAVINGS);
-        testAccount.setBalance(new BigDecimal("1000.00"));
-        testAccount.setCurrency("INR");
-        testAccount.setUserId(testUser.getId());
+        ReflectionTestUtils.setField(testAccount, "id", 1L);
+        testAccount.initialize(
+                testUser,
+                AccountType.SAVINGS,
+                "ACC001234567",
+                1000.00,
+                "INR",
+                "ACTIVE"
+        );
     }
 
     @Test
-    public void testCreateAccount() {
-        CreateAccountRequest request = new CreateAccountRequest();
-        request.setType(AccountType.SAVINGS);
-        request.setInitialDeposit(new BigDecimal("1000.00"));
-        request.setCurrency("INR");
+    public void testCreate() {
+        CreateAccountRequest request = new CreateAccountRequest(
+                AccountTypeInput.SAVINGS,
+                1000.00,
+                "inr"
+        );
 
-        when(userRepository.findById(testUser.getId())).thenReturn(Optional.of(testUser));
         when(accountRepository.save(any(Account.class))).thenReturn(testAccount);
 
-        Account result = accountService.createAccount(request, testUser.getId());
+        AccountResponse result = accountService.create(testUser, request);
 
         assertNotNull(result);
-        assertEquals(AccountType.SAVINGS, result.getType());
-        assertEquals(new BigDecimal("1000.00"), result.getBalance());
-        assertEquals("INR", result.getCurrency());
-        assertEquals(testUser.getId(), result.getUserId());
+        assertEquals("SAVINGS", result.type());
+        assertEquals(1000.00, result.balance());
+        assertEquals("INR", result.currency());
 
-        verify(userRepository).findById(testUser.getId());
-        verify(accountRepository).save(any(Account.class));
+        ArgumentCaptor<Account> accountCaptor = ArgumentCaptor.forClass(Account.class);
+        verify(accountRepository).save(accountCaptor.capture());
+        Account savedAccount = accountCaptor.getValue();
+        assertEquals(testUser, savedAccount.getUser());
+        assertEquals(AccountType.SAVINGS, savedAccount.getType());
+        assertEquals(1000.00, savedAccount.getBalance());
+        assertEquals("INR", savedAccount.getCurrency());
+        assertEquals("ACTIVE", savedAccount.getStatus());
+        assertNotNull(savedAccount.getAccountNumber());
     }
 
     @Test
-    public void testCreateAccountForNonExistentUser() {
-        CreateAccountRequest request = new CreateAccountRequest();
-        request.setType(AccountType.SAVINGS);
-        request.setInitialDeposit(new BigDecimal("1000.00"));
-        request.setCurrency("INR");
-
-        when(userRepository.findById("non-existent")).thenReturn(Optional.empty());
-
-        assertThrows(RuntimeException.class, () -> {
-            accountService.createAccount(request, "non-existent");
-        });
-
-        verify(userRepository).findById("non-existent");
-        verify(accountRepository, never()).save(any(Account.class));
-    }
-
-    @Test
-    public void testGetAccountsByUserId() {
+    public void testGetByUser() {
         List<Account> accounts = Arrays.asList(testAccount);
 
         when(accountRepository.findByUserId(testUser.getId())).thenReturn(accounts);
 
-        List<Account> result = accountService.getAccountsByUserId(testUser.getId());
+        List<AccountResponse> result = accountService.getByUser(testUser);
 
         assertNotNull(result);
         assertEquals(1, result.size());
-        assertEquals(testAccount.getId(), result.get(0).getId());
+        assertEquals(testAccount.getId(), result.get(0).id());
 
         verify(accountRepository).findByUserId(testUser.getId());
     }
 
     @Test
-    public void testGetAccountById() {
+    public void testGetOne() {
         when(accountRepository.findById(testAccount.getId())).thenReturn(Optional.of(testAccount));
 
-        Optional<Account> result = accountService.getAccountById(testAccount.getId());
-
-        assertTrue(result.isPresent());
-        assertEquals(testAccount.getId(), result.get().getId());
-
-        verify(accountRepository).findById(testAccount.getId());
-    }
-
-    @Test
-    public void testGetAccountByIdNotFound() {
-        when(accountRepository.findById("non-existent")).thenReturn(Optional.empty());
-
-        Optional<Account> result = accountService.getAccountById("non-existent");
-
-        assertFalse(result.isPresent());
-
-        verify(accountRepository).findById("non-existent");
-    }
-
-    @Test
-    public void testUpdateAccountBalance() {
-        BigDecimal newBalance = new BigDecimal("1500.00");
-
-        when(accountRepository.findById(testAccount.getId())).thenReturn(Optional.of(testAccount));
-        when(accountRepository.save(any(Account.class))).thenReturn(testAccount);
-
-        Account result = accountService.updateAccountBalance(testAccount.getId(), newBalance);
+        AccountResponse result = accountService.getOne(testAccount.getId());
 
         assertNotNull(result);
-        assertEquals(newBalance, result.getBalance());
+        assertEquals(testAccount.getId(), result.id());
+        assertEquals("SAVINGS", result.type());
+        assertEquals(1000.00, result.balance());
 
         verify(accountRepository).findById(testAccount.getId());
-        verify(accountRepository).save(testAccount);
     }
 
     @Test
-    public void testUpdateAccountBalanceNotFound() {
-        BigDecimal newBalance = new BigDecimal("1500.00");
+    public void testGetOneNotFound() {
+        when(accountRepository.findById(999L)).thenReturn(Optional.empty());
 
-        when(accountRepository.findById("non-existent")).thenReturn(Optional.empty());
+        assertThrows(AppException.class, () -> accountService.getOne(999L));
 
-        assertThrows(RuntimeException.class, () -> {
-            accountService.updateAccountBalance("non-existent", newBalance);
-        });
-
-        verify(accountRepository).findById("non-existent");
-        verify(accountRepository, never()).save(any(Account.class));
+        verify(accountRepository).findById(999L);
     }
 }

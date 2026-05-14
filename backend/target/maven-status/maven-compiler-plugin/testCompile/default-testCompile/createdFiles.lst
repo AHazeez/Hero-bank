@@ -1,0 +1,4 @@
+com\herobank\system\service\AccountServiceTest.class
+com\herobank\system\integration\AuthControllerIntegrationTest.class
+com\herobank\system\integration\AuthControllerIntegrationTest$FakeAuthService.class
+com\herobank\system\integration\AuthControllerIntegrationTest$AuthControllerTestConfig.class
